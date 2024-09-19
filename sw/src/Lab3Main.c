@@ -37,18 +37,42 @@
 #include "../inc/PLL.h"
 #include "../inc/tm4c123gh6pm.h"
 #include "../inc/Timer0A.h"
+#include "../inc/SysTick.h"
+#include "LCD_Driver.h"
+#include "Sound_Driver.h"
+#include "Switch_Driver.h"
 #include "Lab3.h"
+#include "Globals.h"
 // ---------- Prototypes   -------------------------
 void DisableInterrupts(void); // Disable interrupts
 void EnableInterrupts(void);  // Enable interrupts
 void WaitForInterrupt(void);  // low power mode
-int main(void){
-  DisableInterrupts();
-  PLL_Init(Bus80MHz);    // bus clock at 80 MHz
-  // write this
-  EnableInterrupts();
-  while(1){
-      // write this
+
+
+int main(void) {
+  DisableInterrupts();            // Disable interrupts during initialization
+  PLL_Init(Bus80MHz);             // Set system clock to 80 MHz
+  
+  // Initialize all the system components
+  SysTick_Init();                 // Initialize SysTick timer for timekeeping
+  LCD_Init();                     // Initialize the LCD display
+  Sound_Init();                   // Initialize sound (alarm system)
+  Switch_Init();                  // Initialize switches for user input
+  
+  EnableInterrupts();             // Enable interrupts after initialization is done
+  
+  while (1) {
+      LCD_DisplayTime();          // Continuously update the LCD to show the time
+      
+      if (AlarmEnabled) {         // Check if the alarm is enabled
+          // If the current time matches the set alarm time, play sound
+          if (TimeHours == AlarmHour && TimeMinutes == AlarmMinute && TimeSeconds == 0) {
+              Sound_Play();       // Play sound when the alarm goes off
+          }
+      }
+
+      Switch_AlarmToggle();       // Handle alarm toggle (enable/disable) based on user input
+      
+      WaitForInterrupt();         // Enter low-power mode and wait for next interrupt
   }
 }
-
